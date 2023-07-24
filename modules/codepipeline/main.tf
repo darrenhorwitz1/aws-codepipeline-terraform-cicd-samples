@@ -27,15 +27,16 @@ resource "aws_codepipeline" "terraform_pipeline" {
       category         = "Source"
       owner            = "AWS"
       version          = "1"
-      provider         = "CodeCommit"
+      provider         = "CodeStarSourceConnection"
       namespace        = "SourceVariables"
       output_artifacts = ["SourceOutput"]
       run_order        = 1
 
       configuration = {
-        RepositoryName       = var.source_repo_name
+        ConnectionArn        = var.repo_connection_arn
+        FullRepositoryId        = var.source_repo_name
         BranchName           = var.source_repo_branch
-        PollForSourceChanges = "true"
+        # PollForSourceChanges = "true"
       }
     }
   }

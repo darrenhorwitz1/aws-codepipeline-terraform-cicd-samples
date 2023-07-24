@@ -9,7 +9,7 @@ terraform {
 
   required_providers {
     aws = {
-      source = "hashicorp/aws"
+      source  = "hashicorp/aws"
       version = ">= 4.20.1"
     }
   }
@@ -19,6 +19,7 @@ terraform {
 #Module for creating a new S3 bucket for storing pipeline artifacts
 module "s3_artifacts_bucket" {
   source                = "./modules/s3"
+
   project_name          = var.project_name
   kms_key_arn           = module.codepipeline_kms.arn
   codepipeline_role_arn = module.codepipeline_iam_role.role_arn
@@ -33,28 +34,28 @@ module "s3_artifacts_bucket" {
 # Resources
 
 # Module for Infrastructure Source code repository
-module "codecommit_infrastructure_source_repo" {
-  source = "./modules/codecommit"
+# module "codecommit_infrastructure_source_repo" {
+#   source = "./modules/codecommit"
 
-  create_new_repo          = var.create_new_repo
-  source_repository_name   = var.source_repo_name
-  source_repository_branch = var.source_repo_branch
-  repo_approvers_arn       = var.repo_approvers_arn
-  kms_key_arn              = module.codepipeline_kms.arn
-  tags = {
-    Project_Name = var.project_name
-    Environment  = var.environment
-    Account_ID   = local.account_id
-    Region       = local.region
-  }
+#   create_new_repo          = var.create_new_repo
+#   source_repository_name   = var.source_repo_name
+#   source_repository_branch = var.source_repo_branch
+#   repo_approvers_arn       = var.repo_approvers_arn
+#   kms_key_arn              = module.codepipeline_kms.arn
+#   tags = {
+#     Project_Name = var.project_name
+#     Environment  = var.environment
+#     Account_ID   = local.account_id
+#     Region       = local.region
+#   }
 
-}
+# }
 
 # Module for Infrastructure Validation - CodeBuild
 module "codebuild_terraform" {
-  depends_on = [
-    module.codecommit_infrastructure_source_repo
-  ]
+  # depends_on = [
+  #   module.codecommit_infrastructure_source_repo
+  # ]
   source = "./modules/codebuild"
 
   project_name                        = var.project_name
@@ -102,6 +103,18 @@ module "codepipeline_iam_role" {
     Region       = local.region
   }
 }
+
+
+
+
+resource "aws_codestarconnections_connection" "repo" {
+  name          = "example-connection"
+  provider_type = "GitHub"
+}
+
+
+
+
 # Module for Infrastructure Validate, Plan, Apply and Destroy - CodePipeline
 module "codepipeline_terraform" {
   depends_on = [
@@ -113,6 +126,7 @@ module "codepipeline_terraform" {
   project_name          = var.project_name
   source_repo_name      = var.source_repo_name
   source_repo_branch    = var.source_repo_branch
+  repo_connection_arn   = aws_codestarconnections_connection.repo.arn
   s3_bucket_name        = module.s3_artifacts_bucket.bucket
   codepipeline_role_arn = module.codepipeline_iam_role.role_arn
   stages                = var.stage_input

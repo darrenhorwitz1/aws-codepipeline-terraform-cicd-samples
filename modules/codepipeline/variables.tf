@@ -9,6 +9,10 @@ variable "project_name" {
   type        = string
 }
 
+variable "repo_connection_arn" {
+  description = "codestar connection arn for the repo that is being connected to this workspace"
+  type        = string
+}
 variable "source_repo_name" {
   description = "Source repo name of the CodeCommit repository"
   type        = string
